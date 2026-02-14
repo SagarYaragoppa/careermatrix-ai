@@ -1,0 +1,82 @@
+import React, { useState } from "react";
+
+function App() {
+  const [skills, setSkills] = useState("");
+  const [interests, setInterests] = useState("");
+  const [careerMode, setCareerMode] = useState("growth");
+  const [risk, setRisk] = useState("medium");
+  const [result, setResult] = useState(null);
+
+  const handleSubmit = async () => {
+    const response = await fetch("http://127.0.0.1:8000/recommend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        skills: skills.split(",").map(s => s.trim()),
+        interests: interests.split(",").map(i => i.trim()),
+        career_mode: careerMode,
+        risk_preference: risk,
+      }),
+    });
+
+    const data = await response.json();
+    setResult(data);
+  };
+
+  return (
+    <div style={{ padding: "40px", fontFamily: "Arial" }}>
+      <h1>CareerMatrix AI</h1>
+
+      <div>
+        <label>Skills (comma separated)</label><br />
+        <input
+          type="text"
+          value={skills}
+          onChange={(e) => setSkills(e.target.value)}
+          placeholder="python, math"
+        />
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <label>Interests (comma separated)</label><br />
+        <input
+          type="text"
+          value={interests}
+          onChange={(e) => setInterests(e.target.value)}
+          placeholder="ai, technology"
+        />
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <label>Career Mode</label><br />
+        <select value={careerMode} onChange={(e) => setCareerMode(e.target.value)}>
+          <option value="growth">Growth</option>
+          <option value="stability">Stability</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <label>Risk Preference</label><br />
+        <select value={risk} onChange={(e) => setRisk(e.target.value)}>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <button style={{ marginTop: "20px" }} onClick={handleSubmit}>
+        Get Recommendation
+      </button>
+
+      {result && (
+        <div style={{ marginTop: "30px" }}>
+          <h2>Primary Career</h2>
+          <h3>{result.primary_recommendation.career}</h3>
+          <p><b>Match Score:</b> {result.primary_recommendation.match_score}</p>
+
+          <h4>Learning Plan:</h4>
+          <ul>
+            {result.primary_recommendation.learning_plan.map((item, index) => (
+              <li key={index}>
