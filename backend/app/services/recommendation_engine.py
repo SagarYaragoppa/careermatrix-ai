@@ -11,42 +11,38 @@ CAREER_DATABASE = [
     {
         "name": "Machine Learning Engineer",
         "required_skills": ["python", "math", "machine learning"],
+        "related_interests": ["ai", "technology", "research"],
         "growth_score": 9,
         "stability_score": 7,
         "market_demand": 8,
-        "domain": "tech",
+        "risk_level": 6
     },
     {
         "name": "Data Analyst",
         "required_skills": ["python", "sql", "statistics"],
+        "related_interests": ["data", "analysis", "business"],
         "growth_score": 7,
         "stability_score": 8,
         "market_demand": 8,
-        "domain": "tech",
-    },
-    {
-        "name": "Software Developer",
-        "required_skills": ["programming", "problem solving"],
-        "growth_score": 8,
-        "stability_score": 8,
-        "market_demand": 9,
-        "domain": "tech",
+        "risk_level": 4
     },
     {
         "name": "Investment Banker",
         "required_skills": ["finance", "communication", "analysis"],
+        "related_interests": ["finance", "markets", "business"],
         "growth_score": 9,
         "stability_score": 6,
         "market_demand": 7,
-        "domain": "finance",
+        "risk_level": 8
     },
     {
         "name": "Government Officer",
         "required_skills": ["general knowledge", "administration"],
+        "related_interests": ["public service", "administration"],
         "growth_score": 6,
         "stability_score": 10,
         "market_demand": 6,
-        "domain": "public",
+        "risk_level": 2
     },
 ]
 
@@ -63,27 +59,49 @@ def calculate_skill_match(user_skills: List[str], career_skills: List[str]) -> f
     matches = set(user_skills).intersection(set(career_skills))
     return len(matches) / len(career_skills)
 
+def calculate_interest_match(user_interests: List[str], career_interests: List[str]) -> float:
+    matches = set(user_interests).intersection(set(career_interests))
+    return len(matches) / len(career_interests)
 
 def score_career(user_input: Dict, career: Dict) -> float:
-    """
-    Generates weighted score for a single career
-    """
 
-    skill_score = calculate_skill_match(user_input["skills"], career["required_skills"])
+    # Skill Match (35%)
+    skill_score = calculate_skill_match(
+        user_input["skills"],
+        career["required_skills"]
+    )
+    total_score = skill_score * 35
 
-    # Base score from skills (40%)
-    total_score = skill_score * 40
+    # Interest Match (20%)
+    interest_score = calculate_interest_match(
+        user_input["interests"],
+        career["related_interests"]
+    )
+    total_score += interest_score * 20
 
-    # Growth or stability preference (30%)
+    # Growth or Stability Preference (25%)
     if user_input["career_mode"] == "growth":
-        total_score += career["growth_score"] * 3
+        total_score += career["growth_score"] * 2.5
     else:
-        total_score += career["stability_score"] * 3
+        total_score += career["stability_score"] * 2.5
 
-    # Market demand weight (30%)
-    total_score += career["market_demand"] * 3
+    # Market Demand (20%)
+    total_score += career["market_demand"] * 2
+
+    # Risk Preference Adjustment
+    user_risk = user_input["risk_preference"]
+
+    if user_risk == "low":
+        risk_alignment = 10 - abs(career["risk_level"] - 2)
+    elif user_risk == "medium":
+        risk_alignment = 10 - abs(career["risk_level"] - 5)
+    else:  # high
+        risk_alignment = 10 - abs(career["risk_level"] - 8)
+
+    total_score += risk_alignment
 
     return total_score
+
 
 
 def analyze_career(user_input: Dict, career: Dict) -> Dict:
@@ -133,9 +151,12 @@ def recommend_careers(user_input: Dict) -> Dict:
 
 if __name__ == "__main__":
     user = {
-        "skills": ["python", "math", "machine learning"],
-        "career_mode": "growth"
+        "skills": ["python", "math"],
+        "interests": ["ai", "technology"],
+        "career_mode": "growth",
+        "risk_preference": "high"
     }
 
     result = recommend_careers(user)
     print(result)
+
