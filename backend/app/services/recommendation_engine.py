@@ -63,7 +63,64 @@ def calculate_interest_match(user_interests: List[str], career_interests: List[s
     matches = set(user_interests).intersection(set(career_interests))
     return len(matches) / len(career_interests)
 
-def score_career(user_input: Dict, career: Dict) -> float:
+def score_career(user_input: Dict, career: Dict) -> Dict:
+
+    breakdown = {}
+
+    # ---------------- Skill Score (35%)
+    skill_score_raw = calculate_skill_match(
+        user_input["skills"],
+        career["required_skills"]
+    )
+    skill_score = skill_score_raw * 35
+    breakdown["skill_score"] = round(skill_score, 2)
+
+    # ---------------- Interest Score (20%)
+    interest_score_raw = calculate_interest_match(
+        user_input["interests"],
+        career["related_interests"]
+    )
+    interest_score = interest_score_raw * 20
+    breakdown["interest_score"] = round(interest_score, 2)
+
+    # ---------------- Growth/Stability (25%)
+    if user_input["career_mode"] == "growth":
+        pref_score = career["growth_score"] * 2.5
+        breakdown["mode_type"] = "growth"
+    else:
+        pref_score = career["stability_score"] * 2.5
+        breakdown["mode_type"] = "stability"
+
+    breakdown["growth_or_stability_score"] = round(pref_score, 2)
+
+    # ---------------- Market Demand (20%)
+    market_score = career["market_demand"] * 2
+    breakdown["market_score"] = round(market_score, 2)
+
+    # ---------------- Risk Alignment
+    user_risk = user_input["risk_preference"]
+
+    if user_risk == "low":
+        risk_alignment = 10 - abs(career["risk_level"] - 2)
+    elif user_risk == "medium":
+        risk_alignment = 10 - abs(career["risk_level"] - 5)
+    else:
+        risk_alignment = 10 - abs(career["risk_level"] - 8)
+
+    breakdown["risk_alignment_score"] = round(risk_alignment, 2)
+
+    # ---------------- Total Score
+    total_score = (
+        skill_score +
+        interest_score +
+        pref_score +
+        market_score +
+        risk_alignment
+    )
+
+    breakdown["total_score"] = round(total_score, 2)
+
+    return breakdown
 
     # Skill Match (35%)
     skill_score = calculate_skill_match(
@@ -105,9 +162,6 @@ def score_career(user_input: Dict, career: Dict) -> float:
 
 
 def analyze_career(user_input: Dict, career: Dict) -> Dict:
-    """
-    Returns detailed analysis for a career
-    """
 
     user_skills = set(user_input["skills"])
     career_skills = set(career["required_skills"])
@@ -115,15 +169,15 @@ def analyze_career(user_input: Dict, career: Dict) -> Dict:
     matched_skills = list(user_skills.intersection(career_skills))
     missing_skills = list(career_skills.difference(user_skills))
 
-    score = score_career(user_input, career)
+    score_data = score_career(user_input, career)
 
     return {
         "career": career["name"],
-        "match_score": round(score, 2),
+        "match_score": score_data["total_score"],
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
-        "growth_score": career["growth_score"],
-        "stability_score": career["stability_score"],
+        "score_breakdown": score_data,
+        "risk_level": career["risk_level"],
         "market_demand": career["market_demand"]
     }
 
