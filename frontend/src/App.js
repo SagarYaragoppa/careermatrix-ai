@@ -36,6 +36,10 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
 
+  // ✅ NEW STATES
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
   const compareRef = useRef(null);
 
   useEffect(() => {
@@ -81,6 +85,31 @@ function App() {
     const data = await response.json();
     setResult(data);
     setLoading(false);
+  };
+
+  // ✅ FETCH HISTORY
+  const fetchHistory = async () => {
+    const response = await fetch("http://127.0.0.1:8000/history");
+    const data = await response.json();
+    setHistory(data.history);
+  };
+
+  // ✅ REOPEN
+  const reopenRecommendation = async (item) => {
+    setSkills(item.skills);
+    setInterests(item.interests);
+    setCareerMode(item.career_mode);
+    setRisk(item.risk_preference);
+    setShowHistory(false);
+    await handleSubmit();
+  };
+
+  // ✅ DELETE
+  const deleteHistory = async (id) => {
+    await fetch(`http://127.0.0.1:8000/history/${id}`, {
+      method: "DELETE",
+    });
+    fetchHistory();
   };
 
   return (
@@ -146,9 +175,70 @@ function App() {
           >
             Get Recommendation
           </button>
+
+          {/* ✅ HISTORY BUTTON */}
+          <button
+            onClick={() => {
+              setShowHistory(!showHistory);
+              fetchHistory();
+            }}
+            className="w-full bg-cyan-800 text-white py-3 rounded-lg hover:bg-blue-900 transition"
+          >
+            {showHistory ? "Hide History ⚠️" : "View Recommendation History 📜"}
+          </button>
         </div>
 
-        {/* RESULTS */}
+        {/* HISTORY SECTION */}
+        {showHistory && (
+          <div className="mt-10 bg-gray-50 dark:bg-gray-700 p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-bold mb-6 dark:text-white">
+              📜 Recommendation History
+            </h3>
+
+            {history.length === 0 ? (
+              <p className="text-gray-400 italic">No history found.</p>
+            ) : (
+              <div className="space-y-4">
+                {history.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center"
+                  >
+                    <div>
+                      <p className="font-semibold dark:text-white">
+                        {item.primary_career}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {new Date(item.created_at).toLocaleString()}
+                      </p>
+                      <p className="text-sm dark:text-gray-300">
+                        Skills: {item.skills}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => reopenRecommendation(item)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Reopen
+                      </button>
+
+                      <button
+                        onClick={() => deleteHistory(item.id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* EXISTING RESULT SECTION REMAINS UNTOUCHED */}
         {result && (
           <div className="mt-10 space-y-6">
 
@@ -186,6 +276,9 @@ function App() {
     </div>
   );
 }
+
+/* ------------------ YOUR ORIGINAL COMPONENTS BELOW REMAIN UNCHANGED ------------------ */
+
 
 /* ------------------ SIMPLE CARD ------------------ */
 
