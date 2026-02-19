@@ -6,20 +6,36 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 
 function App() {
-  const token = localStorage.getItem("token");
 
   return (
     <Router>
       <Routes>
+{/* Default route */}
+        <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
         <Route
-          path="/"
+          path="/dashboard"
+            element={
+              localStorage.getItem("token") ? (
+                <Dashboard />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+        />
+        <Route
+          path="/dashboard"
           element={
-            token ? <Dashboard /> : <Navigate to="/login" />
+            localStorage.getItem("token") ? (
+              <Dashboard />
+            ) : (
+              <Navigate to="/login" />
+            )
           }
         />
+
       </Routes>
     </Router>
   );

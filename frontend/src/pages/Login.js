@@ -7,6 +7,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+
   const handleLogin = async () => {
 
     const response = await fetch("http://127.0.0.1:8000/login", {
@@ -16,14 +17,20 @@ function Login() {
     });
 
     const data = await response.json();
+    
+    if (response.ok) {
 
-    if (data.access_token) {
+      // ✅ SAVE TOKEN
       localStorage.setItem("token", data.access_token);
-      navigate("/");
+
+      // ✅ Redirect to home/dashboard
+      navigate("/dashboard");
+
     } else {
-      alert("Invalid credentials");
+      alert(data.detail || "Login failed");
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

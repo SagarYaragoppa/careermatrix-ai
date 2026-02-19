@@ -27,6 +27,7 @@ const LoadingSpinner = () => (
 /* ------------------ MAIN APP ------------------ */
 
 function Dashboard() {
+  
   const [skills, setSkills] = useState("");
   const [interests, setInterests] = useState("");
   const [careerMode, setCareerMode] = useState("growth");
@@ -52,6 +53,7 @@ function Dashboard() {
     }
   }, []);
 
+
   useEffect(() => {
     if (compareMode && compareRef.current) {
       compareRef.current.scrollIntoView({ behavior: "smooth" });
@@ -73,9 +75,14 @@ function Dashboard() {
     setLoading(true);
     setCompareMode(false);
 
+    const token = localStorage.getItem("token");  // ← MUST BE HERE (top)
+
     const response = await fetch("http://127.0.0.1:8000/recommend", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
       body: JSON.stringify({
         skills: skills.split(",").map(s => s.trim()),
         interests: interests.split(",").map(i => i.trim()),
@@ -84,10 +91,17 @@ function Dashboard() {
       }),
     });
 
+    if (!response.ok) {
+      alert("Not authorized. Please login again.");
+      setLoading(false);
+      return;
+    }
+
     const data = await response.json();
     setResult(data);
     setLoading(false);
   };
+
 
   // 🔥 NEW FUNCTION FOR RESUME UPLOAD
   const handleResumeUpload = async () => {
@@ -115,7 +129,14 @@ function Dashboard() {
   };
 
   const fetchHistory = async () => {
-    const response = await fetch("http://127.0.0.1:8000/history");
+  const token = localStorage.getItem("token");
+
+  const response = await fetch("http://127.0.0.1:8000/history", {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
     const data = await response.json();
     setHistory(data.history);
   };
@@ -130,11 +151,19 @@ function Dashboard() {
   };
 
   const deleteHistory = async (id) => {
+    const token = localStorage.getItem("token");
+
     await fetch(`http://127.0.0.1:8000/history/${id}`, {
       method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
     });
-    fetchHistory();
+
+    fetchHistory(); // refresh after delete
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-10 transition-colors duration-300">
@@ -153,7 +182,7 @@ function Dashboard() {
             className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-sm"
           >
             {darkMode ? "☀ Light" : "🌙 Dark"}
-          </button>
+          </button> 
         </div>
 
         {/* FORM */}
@@ -193,12 +222,7 @@ function Dashboard() {
             <option value="high">High Risk</option>
           </select>
 
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
-          >
-            Get Recommendation
-          </button>
+          
 
           {/* 🔥 RESUME UPLOAD SECTION */}
           <div className="border-t pt-4 space-y-3">
@@ -222,16 +246,18 @@ function Dashboard() {
             </button>
           </div>
 
-          {/* HISTORY BUTTON */}
-          <button
-            onClick={() => {
-              setShowHistory(!showHistory);
-              fetchHistory();
-            }}
-            className="w-full bg-cyan-800 text-white py-3 rounded-lg hover:bg-blue-900 transition"
+          
+
+          <div className="border-t pt-4 space-y-3">
+            <button
+            onClick={handleSubmit}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
           >
-            {showHistory ? "Hide History ⚠️" : "View Recommendation History 📜"}
+            Get Recommendation
           </button>
+          </div>
+
+          
         </div>
 
         {/* EXISTING RESULT SECTION UNTOUCHED */}
@@ -246,7 +272,7 @@ function Dashboard() {
               onClick={() => setCompareMode(!compareMode)}
               className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition"
             >
-              {compareMode ? "Hide Details ▲" : "Compare Recommendation ▼"}
+              {compareMode ? "Hide Details ⚠️" : "Compare Recommendation ▼"}
             </button>
 
             <AnimatePresence>
@@ -266,6 +292,65 @@ function Dashboard() {
             </AnimatePresence>
           </div>
         )}
+        <div className="border-t mt-5 pt-6 space-y-3">
+            {/* HISTORY BUTTON */}
+            <button
+              onClick={() => {
+                setShowHistory(!showHistory);
+                fetchHistory();
+              }}
+              className="w-full bg-cyan-800 text-white py-3 rounded-lg hover:bg-blue-900 transition"
+            >
+              {showHistory ? "Hide History ⚠️" : "View Recommendation History 📜"}
+            </button>
+            {showHistory && (
+  <div className="mt-4 space-y-3">
+    {history.length === 0 ? (
+      <p className="text-gray-500 dark:text-gray-400 text-sm">
+        No history found.
+      </p>
+    ) : (
+      history.map((item) => (
+        <div
+          key={item.id}
+          className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-semibold text-blue-600 dark:text-blue-300">
+                {item.primary_career}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Backup: {item.backup_career}
+              </p>
+              <p className="text-xs text-gray-400">
+                {new Date(item.created_at).toLocaleString()}
+              </p>
+            </div>
+
+            <div className="space-x-2">
+              <button
+                onClick={() => reopenRecommendation(item)}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded"
+              >
+                Open
+              </button>
+
+              <button
+                onClick={() => deleteHistory(item.id)}
+                className="px-3 py-1 text-sm bg-red-500 text-white rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+          </div>  
       </div>
     </div>
   );
