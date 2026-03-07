@@ -1,10 +1,10 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends,Form
 from pydantic import BaseModel
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from app.services.jwt_dependency import get_current_user
-
+from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
 
@@ -23,6 +23,15 @@ from app.services.auth_service import hash_password, verify_password, create_acc
 app = FastAPI(title="CareerMatrix AI")
 
 
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # ----------------------------
 # Middleware
 # ----------------------------
@@ -57,7 +66,9 @@ class UserInput(BaseModel):
     interests: List[str]
     career_mode: str
     risk_preference: str
-
+class TransitionRequest(BaseModel):
+    current_career: str
+    skills: List[str]
 
 class AuthRequest(BaseModel):
     email: str
@@ -124,14 +135,19 @@ def login(user: AuthRequest):
 # Resume Upload
 # ----------------------------
 @app.post("/upload-resume")
-async def upload_resume(file: UploadFile = File(...)):
+async def upload_resume(
+    file: UploadFile = File(...),
+    job_skills: str = Form("")
+):
 
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file_path = os.path.join("uploaded_resumes", file.filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    parsed_data = process_resume(file_path)
+    skills_list = [s.strip() for s in job_skills.split(",")] if job_skills else []
+
+    parsed_data = process_resume(file_path, skills_list)
 
     return parsed_data
 
@@ -272,8 +288,51 @@ def get_recommendation_history(
 
     finally:
         db.close()
+# ----------------------------
+# Career Transition
+# ----------------------------
+@app.post("/career-transition")
+def career_transition(data: TransitionRequest):
 
+    transition_map = {
+        "mechanical engineer": [
+            "Robotics Engineer",
+            "Data Analyst",
+            "ML Engineer"
+        ],
 
+        "civil engineer": [
+            "Data Analyst",
+            "Project Manager"
+        ],
+
+        "accountant": [
+            "Financial Analyst",
+            "Data Analyst"
+        ],
+
+        "teacher": [
+            "Instructional Designer",
+            "Data Analyst"
+        ],
+
+        "software developer": [
+            "ML Engineer",
+            "Data Scientist"
+        ]
+    }
+
+    career = data.current_career.lower()
+
+    results = transition_map.get(
+        career,
+        ["Data Analyst", "Product Manager"]
+    )
+
+    return {
+        "current_career": data.current_career,
+        "recommended_transitions": results
+    }
 # ----------------------------
 # Delete History
 # ----------------------------

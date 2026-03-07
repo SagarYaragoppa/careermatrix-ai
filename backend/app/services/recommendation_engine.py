@@ -272,7 +272,7 @@ def generate_roadmap(skill_gap_plan: List[Dict]) -> Dict:
 
 from typing import List, Dict
 from app.services.career_database import CAREER_DATABASE
-
+    
 
 # ----------------------------
 # Utility Functions

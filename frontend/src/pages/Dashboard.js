@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
 
 /* ------------------ LOADING SPINNER ------------------ */
 
@@ -36,10 +37,13 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
+  
 
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-
+  const [currentCareer, setCurrentCareer] = useState("");
+  const [transitionResult, setTransitionResult] = useState(null);
+  const navigate = useNavigate();
   // 🔥 NEW STATE FOR RESUME
   const [resumeFile, setResumeFile] = useState(null);
 
@@ -128,6 +132,29 @@ function Dashboard() {
     setLoading(false);
   };
 
+  const handleCareerTransition = async () => {
+
+    if (!currentCareer) {
+      alert("Please enter your current career");
+      return;
+    }
+
+    const response = await fetch("http://127.0.0.1:8000/career-transition", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        current_career: currentCareer,
+        skills: skills.split(",").map(s => s.trim())
+      })
+    });
+
+    const data = await response.json();
+
+    setTransitionResult(data);
+  };
+
   const fetchHistory = async () => {
   const token = localStorage.getItem("token");
 
@@ -185,8 +212,33 @@ function Dashboard() {
           </button> 
         </div>
 
+        <div className="mb-6 border-t pt-4 space-y-3">
+
+
+          <div className="mb-6 flex justify-center">
+
+            <button
+              onClick={() => navigate("/resume-parser")}
+              className="relative text-gray-200 text-lg font-medium group"
+            >
+              Unlock Resume Insights
+
+              <span
+                className="absolute left-0 -bottom-1 h-[3px] w-full 
+                bg-gradient-to-r from-purple-600 to-pink-300 
+                rounded-full shadow-[0_0_20px_rgba(168,85,247,1)]
+                transition-all duration-300 
+                group-hover:scale-x-110"
+              ></span>
+
+            </button>
+
+          </div>
+
+        </div>
+
         {/* FORM */}
-        <div className="space-y-4">
+        <div className="space-y-4 border-t pt-4 space-y-3">
           <input
             type="text"
             placeholder="Skills (python, math)"
@@ -246,7 +298,53 @@ function Dashboard() {
             </button>
           </div>
 
-          
+          {/* CAREER TRANSITION SECTION */}
+
+          <div className="border-t pt-4 space-y-3">
+
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Career Transition (For professionals changing careers)
+            </p>
+
+            <input
+              type="text"
+              placeholder="Current Career (Example: Mechanical Engineer)"
+              value={currentCareer}
+              onChange={(e) => setCurrentCareer(e.target.value)}
+              className="w-full border rounded-lg p-3 bg-white dark:bg-gray-700 dark:text-white"
+            />
+
+            <button
+              onClick={handleCareerTransition}
+              className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-orange-700 transition"
+            >
+              Find Career Transition 🔄
+            </button>
+
+          </div>
+          {transitionResult && (
+
+            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+
+              <p className="font-semibold  text-white mb-2">
+                Recommended Career Transitions
+              </p>
+
+              <ul className="list-disc list-inside">
+
+                {transitionResult.recommended_transitions.map((career, index) => (
+
+                  <li key={index}>
+                    {career}
+                  </li>
+
+                ))}
+
+              </ul>
+
+            </div>
+
+          )}
 
           <div className="border-t pt-4 space-y-3">
             <button
