@@ -23,7 +23,7 @@ The project demonstrates practical applications of **Artificial Intelligence, Na
 * Installation Guide
 * Usage Guide
 * Future Improvements
-* Author
+* Team Members
 
 ---
 
@@ -475,18 +475,21 @@ Possible improvements include:
 
 ---
 
-# Author
 
-Sagar Ramesh Yaragoppa
-Sahil Kadaskar
-Rugved Narendra Bhandarkar
-Kavya Patel
-Sneha Satarke
-Shreya Diliprao Thakare
-Lathisha Padayachi
-Yash Sudam Ukirde
-Kshitij Shrikhande
-Khushal Moundekar
+# Team Members
+
+| Sr. No | Name |
+|------|------|
+| 1 | Sagar Ramesh Yaragoppa |
+| 2 | Sahil Kadaskar |
+| 3 | Rugved Narendra Bhandarkar |
+| 4 | Kavya Patel |
+| 5 | Sneha Satarke |
+| 6 | Shreya Diliprao Thakare |
+| 7 | Lathisha Padayachi |
+| 8 | Yash Sudam Ukirde |
+| 9 | Kshitij Shrikhande |
+| 10 | Khushal Moundekar |
 
 This project was developed as part of an academic and practical exploration of AI applications in career guidance and recruitment systems.
 
